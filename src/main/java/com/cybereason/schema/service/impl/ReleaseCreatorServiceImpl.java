@@ -3,6 +3,7 @@ package com.cybereason.schema.service.impl;
 import com.cybereason.schema.model.ReleaseInfo;
 import com.cybereason.schema.service.ReleaseCreatorService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
 public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements ReleaseCreatorService {
@@ -83,17 +85,18 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
             return;
         }
 
-        String releaseInfoString = new BufferedReader(
-                new InputStreamReader(releaseInfoFileContent, StandardCharsets.UTF_8))
-                .lines()
-                .collect(Collectors.joining("\n"));
+        try {
+            Scanner s = new Scanner(releaseInfoFileContent).useDelimiter("\\A");
+            String releaseInfoString = s.hasNext() ? s.next() : "";
 
-        if (releaseInfoString != null && !"".equalsIgnoreCase(releaseInfoString)) {
-            try {
+            releaseInfoFileContent.reset();
+
+            if (releaseInfoString != null && !"".equalsIgnoreCase(releaseInfoString)) {
+                releaseInfoFileContent.reset();
                 releaseInfo = objectMapper.readValue(releaseInfoString, ReleaseInfo.class);
-            } catch (JsonProcessingException e) {
-                LOGGER.error("Unable to get release information from zip: ", e.getMessage(), e);
             }
+        } catch (IOException e) {
+            LOGGER.error("Unable to get release information from zip: ", e.getMessage(), e);
         }
     }
 
@@ -160,10 +163,8 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
         LOGGER.info(" - Branch name: " + branch);
         LOGGER.info(" - File output path: " + githubDirName + "/" + fileName);
 
-        String stringFileContent = new BufferedReader(
-                new InputStreamReader(fileContent, StandardCharsets.UTF_8))
-                .lines()
-                .collect(Collectors.joining("\n"));
+        Scanner s = new Scanner(fileContent).useDelimiter("\\A");
+        String stringFileContent = s.hasNext() ? s.next() : "";
 
         //Create content
         GHContentBuilder content = repo.createContent()
