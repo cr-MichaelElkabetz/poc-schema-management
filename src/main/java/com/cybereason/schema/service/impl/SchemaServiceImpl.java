@@ -36,7 +36,7 @@ public class SchemaServiceImpl implements SchemaService {
                     .map(item -> new Release(item.getTagName(), item.getId())).collect(Collectors.toList());
             return objectMapper.writeValueAsString(releases);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error occurred while trying to fetch schema releases: " + e.getMessage(), e);
         }
         return null;
     }
@@ -62,6 +62,6 @@ public class SchemaServiceImpl implements SchemaService {
         LOGGER.info("Creating a new pull request, repository: " + repositoryName);
         GHRepository repo = this.githubClient.getRepository(repositoryName);
         ReleaseCreatorService releaseCreatorService = new ReleaseCreatorServiceImpl(repo);
-        return releaseCreatorService.createPullRequest(fileContent);
+        return releaseCreatorService.createNewRelease(fileContent);
     }
 }

@@ -4,10 +4,7 @@ import com.cybereason.schema.model.ReleaseInfo;
 import com.cybereason.schema.service.ReleaseCreatorService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHContentBuilder;
-import org.kohsuke.github.GHRef;
-import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,24 +22,25 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
 
     private ReleaseInfo releaseInfo;
 
-
     public ReleaseCreatorServiceImpl(GHRepository repo) {
         this.repo = repo;
     }
 
     @Override
-    public String createPullRequest(InputStream fileContent) {
+    public String createNewRelease(InputStream fileContent) {
         extractReleaseFiles(fileContent);
-        releaseInfo = getReleaseInfo();
+        getReleaseInfo();
         String featureBranch = createBranch();
 
         if (featureBranch != null) {
             commitFiles(featureBranch);
-            executePullRequest(featureBranch);
-            LOGGER.info("Pull request created successfully");
-            return "Pull request created successfully";
+            GHPullRequest pullRequest = performPullRequest(featureBranch);
+            mergePullRequest(pullRequest);
+            String releaseTag = createNewRelease();
+            LOGGER.info("A new release created successfully, release tag: " + releaseTag);
+            return "A new release created successfully";
         }
-        return "Unable to create a pull request";
+        return "Unable to create a new release";
     }
 
     private void commitFiles(String featureBranch) {
@@ -80,9 +78,9 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
         }
     }
 
-    public ReleaseInfo getReleaseInfo() {
+    public void getReleaseInfo() {
         if (releaseInfoFileContent == null) {
-            return null;
+            return;
         }
 
         String releaseInfoString = new BufferedReader(
@@ -92,20 +90,55 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
 
         if (releaseInfoString != null && !"".equalsIgnoreCase(releaseInfoString)) {
             try {
-                return objectMapper.readValue(releaseInfoString, ReleaseInfo.class);
+                releaseInfo = objectMapper.readValue(releaseInfoString, ReleaseInfo.class);
             } catch (JsonProcessingException e) {
                 LOGGER.error("Unable to get release information from zip: ", e.getMessage(), e);
             }
         }
-        return null;
     }
 
-    private void executePullRequest(String featureBranch) {
+    private GHPullRequest performPullRequest(String featureBranch) {
         try {
-            repo.createPullRequest(releaseInfo.getAuthor() + " wish to release a new schema version", featureBranch, "master", "check");
+            GHPullRequest pullRequest = repo.createPullRequest(releaseInfo.getAuthor() + " wish to release a new schema version", featureBranch, "master", "");
+            LOGGER.info("Pull request created successfully");
+            return pullRequest;
         } catch (IOException e) {
             LOGGER.error("Unable to create a pull request: ", e.getMessage(), e);
         }
+        return null;
+    }
+
+    private void mergePullRequest(GHPullRequest pullRequest) {
+        try {
+            pullRequest.merge("Auto merge schema release");
+            LOGGER.info("Auto merge pull request successfully");
+        } catch (IOException e) {
+            LOGGER.error("Unable to merge a pull request: ", e.getMessage(), e);
+        }
+    }
+
+    private String createNewRelease() {
+        try {
+            GHRelease lastRelease = repo.getReleases().get(0);
+            String releaseTag = increaseReleaseVersion(lastRelease);
+            repo.createRelease(releaseTag).create();
+            return releaseTag;
+        } catch (IOException e) {
+            LOGGER.error("Unable to merge a pull request: ", e.getMessage(), e);
+        }
+        return null;
+    }
+
+    private String increaseReleaseVersion(GHRelease lastRelease) {
+        String lastReleaseTag = lastRelease.getTagName();
+        String[] fn = lastReleaseTag.split("\\.");
+        if (Integer.valueOf(fn[1]) > 50) {
+            fn[0] = String.valueOf(Integer.valueOf(fn[0]) + 1);
+            fn[1] = String.valueOf(0);
+        } else {
+            fn[1] = String.valueOf(Integer.valueOf(fn[1]) + 1);
+        }
+        return String.join(".", fn);
     }
 
     private String createBranch() {
