@@ -58,10 +58,10 @@ public class SchemaServiceImpl implements SchemaService {
     }
 
     @Override
-    public String createPullRequest(String repositoryName, InputStream fileContent) {
+    public String processRelease(String repositoryName, InputStream fileContent, boolean autoMerge) {
         LOGGER.info("Creating a new pull request, repository: " + repositoryName);
         GHRepository repo = this.githubClient.getRepository(repositoryName);
         ReleaseCreatorService releaseCreatorService = new ReleaseCreatorServiceImpl(repo);
-        return releaseCreatorService.createNewRelease(fileContent);
+        return releaseCreatorService.createPR(fileContent, autoMerge);
     }
 }

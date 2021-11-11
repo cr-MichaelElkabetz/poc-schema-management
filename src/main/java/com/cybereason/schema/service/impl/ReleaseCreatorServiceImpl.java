@@ -2,20 +2,14 @@ package com.cybereason.schema.service.impl;
 
 import com.cybereason.schema.model.ReleaseInfo;
 import com.cybereason.schema.service.ReleaseCreatorService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.kohsuke.github.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements ReleaseCreatorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReleaseCreatorServiceImpl.class);
@@ -29,7 +23,7 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
     }
 
     @Override
-    public String createNewRelease(InputStream fileContent) {
+    public String createPR(InputStream fileContent, boolean autoMerge) {
         extractReleaseFiles(fileContent);
         getReleaseInfo();
         String featureBranch = createBranch();
@@ -37,10 +31,15 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
         if (featureBranch != null) {
             commitFiles(featureBranch);
             GHPullRequest pullRequest = performPullRequest(featureBranch);
-            mergePullRequest(pullRequest);
-            String releaseTag = createNewRelease();
-            LOGGER.info("A new release created successfully, release tag: " + releaseTag);
-            return "A new release created successfully";
+            if (autoMerge == true) {
+                mergePullRequest(pullRequest);
+                String releaseTag = createNewRelease();
+                LOGGER.info("A new release created successfully, release tag: " + releaseTag);
+                return "A new release created successfully";
+            } else {
+                LOGGER.info("A pull request created successfully");
+                return "Pull request created successfully";
+            }
         }
         return "Unable to create a new release";
     }

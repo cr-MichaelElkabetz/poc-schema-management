@@ -9,5 +9,5 @@ public interface SchemaService {
 
     String getReleaseInfo(String repositoryName, Long releaseID);
 
-    String createPullRequest(String repositoryName, InputStream fileContent);
+    String processRelease(String repositoryName, InputStream fileContent, boolean autoMerge);
 }

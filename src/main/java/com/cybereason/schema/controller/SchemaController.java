@@ -63,7 +63,22 @@ public class SchemaController {
 
             InputStream fileContent = ctx.bodyAsInputStream();
 
-            String response = schemaService.createPullRequest(repositoryName, fileContent);
+            String response = schemaService.processRelease(repositoryName, fileContent, false);
+            if ("ERROR".equalsIgnoreCase(response)) {
+                ctx.result("{\"message\":\"Processing failed\"}");
+            } else {
+                ctx.result("{\"message\":\"" + response + "\"}");
+            }
+            ctx.res.setStatus(200);
+        });
+
+        app.post("/release/{repository}", ctx -> {
+            ctx.res.setContentType("application/json");
+            String repositoryName = ctx.pathParam("repository");
+
+            InputStream fileContent = ctx.bodyAsInputStream();
+
+            String response = schemaService.processRelease(repositoryName, fileContent, true);
             if ("ERROR".equalsIgnoreCase(response)) {
                 ctx.result("{\"message\":\"Processing failed\"}");
             } else {
