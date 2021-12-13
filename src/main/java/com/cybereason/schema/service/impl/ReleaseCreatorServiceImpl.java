@@ -45,36 +45,53 @@ public class ReleaseCreatorServiceImpl extends ReleaseServiceAbstract implements
     }
 
     private void commitFiles(String featureBranch) {
+        String shaInfo = null;
         if (releaseInfoFileContent != null) {
             try {
-                String releaseInfoSha = repo.getFileContent("schema/src/main/resources/release-info.json").getSha();
-                commitFile("schema/src/main/resources", "release-info.json", releaseInfoSha, releaseInfoFileContent, featureBranch);
+                shaInfo = repo.getFileContent("schema/src/main/resources/release-info.json").getSha();
             } catch (IOException e) {
-                LOGGER.error("Error occurred while tried to commit release-info file");
+                LOGGER.error("Error occurred while tried to commit release-info file", e.getMessage(), e);
+            }
+            try {
+                commitFile("schema/src/main/resources", "release-info.json", shaInfo, releaseInfoFileContent, featureBranch);
+            } catch (IOException e) {
+                LOGGER.error("Error occurred while tried to commit release-info file", e.getMessage(), e);
             }
         }
         if (featureDefinitionsContent != null) {
             try {
-                String releaseInfoSha = repo.getFileContent("schema/src/main/resources/feature.definitions").getSha();
-                commitFile("schema/src/main/resources", "feature.definitions", releaseInfoSha, featureDefinitionsContent, featureBranch);
+                shaInfo = repo.getFileContent("schema/src/main/resources/feature.definitions").getSha();
             } catch (IOException e) {
-                LOGGER.error("Error occurred while tried to commit feature.definitions file");
+                LOGGER.error("Error occurred while tried to commit feature.definitions file", e.getMessage(), e);
+            }
+            try {
+                commitFile("schema/src/main/resources", "feature.definitions", shaInfo, featureDefinitionsContent, featureBranch);
+            } catch (IOException e) {
+                LOGGER.error("Error occurred while tried to commit feature.definitions file", e.getMessage(), e);
             }
         }
         if (dynamicDefinitionsContent != null) {
             try {
-                String releaseInfoSha = repo.getFileContent("schema/src/main/resources/dynamic.definitions").getSha();
-                commitFile("schema/src/main/resources", "dynamic.definitions", releaseInfoSha, dynamicDefinitionsContent, featureBranch);
+                shaInfo = repo.getFileContent("schema/src/main/resources/dynamic.definitions").getSha();
             } catch (IOException e) {
-                LOGGER.error("Error occurred while tried to commit dynamic.definitions file");
+                LOGGER.error("Error occurred while tried to commit dynamic.definitions file", e.getMessage(), e);
+            }
+            try {
+                commitFile("schema/src/main/resources", "dynamic.definitions", shaInfo, dynamicDefinitionsContent, featureBranch);
+            } catch (IOException e) {
+                LOGGER.error("Error occurred while tried to commit dynamic.definitions file", e.getMessage(), e);
             }
         }
         if (deliveryDefinitionsContent != null) {
             try {
-                String releaseInfoSha = repo.getFileContent("schema/src/main/resources/delivery.definitions").getSha();
-                commitFile("schema/src/main/resources", "delivery.definitions", releaseInfoSha, deliveryDefinitionsContent, featureBranch);
+                shaInfo = repo.getFileContent("schema/src/main/resources/delivery.definitions").getSha();
             } catch (IOException e) {
-                LOGGER.error("Error occurred while tried to commit delivery.definitions file");
+                LOGGER.error("Error occurred while tried to commit delivery.definitions file", e.getMessage(), e);
+            }
+            try {
+                commitFile("schema/src/main/resources", "delivery.definitions", shaInfo, deliveryDefinitionsContent, featureBranch);
+            } catch (IOException e) {
+                LOGGER.error("Error occurred while tried to commit delivery.definitions file", e.getMessage(), e);
             }
         }
     }
